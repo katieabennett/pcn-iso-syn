@@ -1,0 +1,46 @@
+---
+title: "iso-syn"
+author: "Katie Bennett"
+date: "9/13/2020"
+output: html_document
+---
+This code runs the ISRaD QAQC tool from the ISRaD package. It refernces the PCN STable Isotope SYnthesis's versions of the Master template and Template Info sheet located on the "pcn-syn" branch of the ISRaD GitHUb page. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## First, install and load libraries
+```{r}
+#Packages to install (you only need to do this once)
+
+#For loading the ISRaD package below:
+install.packages("devtools")
+install.packages("rcrossref")
+
+#Load these packages (you need to do this every time you restart R)
+library(devtools)
+library(rcrossref)
+
+#Install package 'ISRaD' from our branch of the ISRaD github repository: this could take a few minutes, don't panic
+#You may also be prompted to update other packages you have installed, you can skip this option as it is not necessary to run the code
+devtools::install_github("International-Soil-Radiocarbon-Database/ISRaD/Rpkg", ref="pcn-syn", force = T) #change ref= to "master" to use public version of the package (our templates wont pass the "master version"!!)
+library(ISRaD) # load the package
+```
+
+## Run the QAQC tool and compile templates if you have multiple
+  1) download the templates you wish to run the QAQC tool on from google drive and save them in a designated folder
+  2) run the code below. It is currently setup to create a combined dataframe of all of the templates. This is not entirely necessary to just run the QAQC but sets things up nicely to do further analyses.
+  3)the QAQC tool will save create 2 folders in the folder your templates are in. They are called 1."QAQC" and 2. "database". "QAQC" contains the individual QAQC reports for each template as a text file. "database" contains an excel file summarizing all of the templates that were compiled and a text file summarizing which templates passed and which failed the QAQC check. Open the QAQC reports in the QAQC folder to see details on why a specific template failed. 
+  4) Alternatively you can use the second line of code to run a single template. With this option the QAQC report will print in the R console instead of creating text files. This option may give you a "broken doi" warning or something along those lines.  If the only warning on the template is regarding the doi, your template WILL pass the QAQC tool using the compile function. Still working on how to resolve this mismatch. 
+
+```{r}
+#compiling templates, compile function also runs QAQC on all included templates. This can be used on just 1 template or multiple
+compiled<-compile(dataset_directory = "C:/Users/katie/Documents/R/pcn-iso-syn/data", write_report = T, write_out = T, return="list") #replace the file path with the location of the templates on your computer
+
+#ALternate option to run QAQC on a single template: 
+ QAQC("C:/Users/katie/Documents/R/pcn-iso-syn/data/Quay_1988.xlsx") #change file path
+
+```
+
+

@@ -1,0 +1,136 @@
+ISRaD Compilation Log 
+ 
+ 2020-09-18 09:58:23 
+ - - - - - - - - - - - - - - - 
+
+
+Compiling data files in C:/Users/katie/Documents/R/pcn-iso-syn/data 
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+ 1 checking Douglas_2020.xlsx ...New data - failed QAQC. Check report in QAQC folder.
+
+ 2 compiling Knoblauch_2016.xlsx ... passed QAQC
+
+ 3 compiling Marushchak_2016.xlsx ... passed QAQC
+
+ 4 checking McCalley_2014.xlsx ...New data - failed QAQC. Check report in QAQC folder.
+
+ 5 checking Nakagawa_2002.xlsx ...New data - failed QAQC. Check report in QAQC folder.
+
+ 6 checking Popp_1999.xlsx ...New data - failed QAQC. Check report in QAQC folder.
+
+ 7 compiling Quay_1988.xlsx ... passed QAQC
+
+ 8 compiling Sriskantharajah_2012.xlsx ... passed QAQC
+
+ 9 compiling Thompson_2016.xlsx ... passed QAQC
+
+ 10 compiling Wahlen_1989.xlsx ... passed QAQC
+
+ 11 checking Waldron_1999.xlsx ...New data - failed QAQC. Check report in QAQC folder.
+
+-------------
+
+Summary statistics...
+
+ metadata tab...6 observations
+    entry_name : 6
+    doi : 6
+    curator_name : 6
+    curator_organization : 6
+    curator_email : 6
+    modification_date_y : 6
+    modification_date_m : 6
+    modification_date_d : 6
+    contact_name : 6
+    contact_email : 6
+    bibliographical_reference : 6
+    metadata_note : 1
+    template_version : 6
+ site tab...8 observations
+    entry_name : 8
+    site_name : 8
+    site_lat : 8
+    site_long : 8
+    site_elevation : 1
+    site_note : 4
+ profile tab...14 observations
+    entry_name : 14
+    site_name : 14
+    pro_name : 14
+    pro_note : 4
+    pro_lat : 7
+    pro_long : 7
+    pro_elevation : 1
+    pro_treatment : 14
+    pro_reps : 3
+    pro_MAT : 10
+    pro_MAP : 9
+    pro_peatland : 6
+    pro_usda_soil_order : 3
+    pro_soil_taxon : 5
+    pro_soil_taxon_sys : 5
+    pro_land_cover : 13
+    pro_veg_note : 6
+    pro_thaw_depth : 4
+    pro_permafrost : 8
+    pro_thermokarst : 8
+    pro_water_body : 6
+    pro_wetland_type : 7
+    pro_disturbance_type : 5
+    pro_lake_SA : 6
+    pro_lake_depth : 6
+    pro_lake_sediment : 6
+ flux tab...22 observations
+    entry_name : 22
+    site_name : 22
+    pro_name : 22
+    flx_name : 22
+    flx_obs_date_y : 22
+    flx_obs_date_m : 14
+    flx_obs_date_d : 10
+    flx_notes : 7
+    flx_pathway : 6
+    flx_analyte : 16
+    flx_ecosystem_component : 16
+    flx_method : 22
+    flx_method_note : 10
+    flx_storage_method : 12
+    flx_duration : 7
+    flx_duration_units : 7
+    flx_keeling_plot : 10
+    flx_source_temp : 1
+    flx_rate : 8
+    flx_rate_sd : 7
+    flx_rate_units : 8
+    flx_aquatic_ph : 1
+    flx_aquatic_cond : 1
+    flx_13c : 22
+    flx_13c_sd : 22
+    flx_2h : 1
+    flx_analytical_method : 18
+    flx_method_uncertainty : 16
+    flx_fraction_modern : 3
+ layer tab...0 observations
+ interstitial tab...53 observations
+    entry_name : 53
+    site_name : 53
+    pro_name : 53
+    ist_name : 53
+    ist_obs_date_y : 53
+    ist_obs_date_m : 53
+    ist_obs_date_d : 53
+    ist_depth : 53
+    ist_phase : 53
+    ist_analyte : 53
+    ist_method : 53
+    ist_storage_method : 53
+    ist_concentration : 53
+    ist_concentration_units : 53
+    ist_13c : 16
+    ist_13c_sd : 16
+    ist_analytical_method : 16
+ fraction tab...0 observations
+ incubation tab...0 observations
+ - - - - - - - - - - - - - - - - - - - -
