@@ -1,0 +1,190 @@
+---
+title: "iso-syn"
+author: "Katie Bennett"
+date: "9/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## First, install and load libraries
+```{r}
+#Packages to install (you only need to do this once)
+#For data analysis:
+install.packages("tidyverse") #includes dplyr, ggplot2
+install.packages("maps")
+install.packages("ggmap")
+install.packages("na.tools")
+install.packages("agricolae")
+install.packages("naniar")
+
+#For loading the ISRaD package below:
+install.packages("devtools")
+install.packages("rcrossref")
+
+#Load these packages (you need to do this every time you restart R)
+library(tidyverse)
+library(ggplot2)
+library(maps)
+library(ggmap)
+library(devtools)
+library(rcrossref)
+library(na.tools)
+library(agricolae)
+library(naniar)
+
+#Install package 'ISRaD' from our branch of the ISRaD github repository: this could take a few minutes, don't panic
+devtools::install_github("International-Soil-Radiocarbon-Database/ISRaD/Rpkg", ref="pcn-syn", force = T) #change ref= to "master" to use public version of the package (our templates wont pass the "master version"!!)
+library(ISRaD) # load the package
+```
+
+ Compile templates and create "flat" dataframes for layers of interest
+```{r}
+
+#compiling templates, compile function also runs QAQC on all included templates
+compiled<-compile(dataset_directory = "C:/Users/katie/Documents/R/pcn-iso-syn/data" , write_report = T, write_out = T, return="list") #replace file path with location of your downloaded templates
+
+#ALternate option to run QAQC on a single template: 
+# QAQC("C:/Users/katie/Documents/R/pcn-iso-syn/data/Douglas_2020.xlsx") #change file path
+
+#run ISRaDExtra functions, can run all together using ISRaD.extra.R or can run individually. Best to run them together bc some need to be run in order/rely on eachother
+#ISRaD.extra(compiled)  #need to specify a geospatial database
+#ISRaD.extra.Cstocks(compiled)
+#ISRaD.extra.delta_delta(compiled)
+#ISRaD.extra.fill_14c(compiled)
+#ISRaD.extra.fill_coords(compiled)
+#ISRaD.extra.fill_dates(compiled)
+#ISRaD.extra.fill_fm(compiled)
+
+#use built-in flatten function in ISRaD package to create "flat" dataframes, can only do this with "flux", "layer", "interstitial", "fraction", or "incubation" tabs
+flux_data <- ISRaD.flatten(compiled, 'flux') #enter name of dataset and table that you want data for
+inter_data <- ISRaD.flatten(compiled, 'interstitial')
+lyr_data <- ISRaD.flatten(compiled, 'layer')
+frac_data <- ISRaD.flatten(compiled, 'fraction')
+inc_data <- ISRaD.flatten(compiled, 'incubation')
+
+#preparing data to export coordinates to be used in QGIS
+#filter each df down to just relevant location info
+flux_locations <- flux_data %>%
+  select(entry_name, site_name, site_lat, site_long, site_datum, pro_land_cover, pro_water_body, pro_wetland_type, pro_lake_sediment, pro_lake_depth, pro_lake_SA,  flx_analyte) #filters down to only the named columns
+
+inter_locations <- inter_data %>%
+  select(entry_name, site_name, site_lat, site_long, site_datum, pro_land_cover, pro_water_body, pro_wetland_type, pro_lake_sediment, pro_lake_depth, pro_lake_SA, ist_analyte)
+
+lyr_locations <- lyr_data %>%
+  select(entry_name, site_name, site_lat, site_long, site_datum, pro_land_cover, pro_water_body, pro_wetland_type, pro_lake_sediment, pro_lake_depth, pro_lake_SA) 
+
+#export location data as 2 csv files, join offline
+ write.csv(flux_locations, file = "flux_locations.csv")
+ write.csv(inter_locations, file = "inter_locations.csv")
+ write.csv(lyr_locations, file = "lyr_locations.csv")
+ 
+ 
+```
+
+Flux data cleaning and filtering dataframes for our variables of interest
+```{r}
+## Cleaning flux data
+#replacing NAs for permafrost and thermokarst with absent/no
+flux_data$pro_permafrost <- na.replace(flux_data$pro_permafrost, "absent")
+flux_data$pro_thermokarst <- na.replace(flux_data$pro_thermokarst, "no")
+flux_data$pro_permafrost <- recode(flux_data$pro_permafrost, "yes" = "present") 
+
+#filtering CH4 flux data
+flux_CH4 <- flux_data %>%
+  select(entry_name, site_lat, site_long, site_datum, flx_analyte, flx_13c, flx_2h, pro_thaw_depth, pro_depth_water, pro_land_cover, pro_water_body, pro_permafrost, pro_thermokarst, pro_wetland_type, pro_lake_depth, pro_lake_SA, pro_lake_sediment) %>% #filters down to only the named columns
+  filter(flx_analyte == "CH4") %>%  #filters for CH4 data.
+  replace_with_na(replace = list(pro_land_cover = "wetland")) %>% #replaces wetland landcover type w NA for simplicity (not totally necessary)
+  unite("cover_type", c(pro_land_cover, pro_water_body, pro_wetland_type), remove = FALSE) #creates 1 new column called "cover_type" w land_cover, water_body, and wetland_type
+
+##recoding cover_type classes
+ flux_CH4$cover_type <- as.factor(flux_CH4$cover_type)
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_Lake_NA"  = "lake")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_lake_NA"  = "lake")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_NA_bogs"  = "bogs")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_NA_bog"  = "bogs")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_stream_bogs"  = "bogs")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_NA_fens"  = "fens")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_NA_wetland_general"  = "general wetland")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "tundra_NA_NA"  = "tundra")
+ flux_CH4$cover_type <- recode(flux_CH4$cover_type, "NA_NA_permafrost bogs"  = "permafrost bogs")
+ 
+ 
+ 
+#filtering CO2 flux data
+flux_CO2 <- flux_data %>%
+  select(entry_name, site_lat, site_long, site_datum, flx_analyte, flx_13c, pro_thaw_depth, pro_depth_water, pro_land_cover, pro_water_body, pro_permafrost, pro_thermokarst, pro_wetland_type, pro_lake_depth, pro_lake_SA, pro_lake_sediment) %>% #filters down to only the named columns
+  filter(flx_analyte == "CO2") %>% #filters for CO2 data.
+  replace_with_na(replace = list(pro_land_cover = "wetland")) %>% #replaces wetland landcover type w NA for simplicity (not totally necessary)
+  unite("cover_type", c(pro_land_cover, pro_water_body, pro_wetland_type), remove = FALSE) #creates 1 new column w land_cover, water_body, and wetland_type
+
+##recoding cover type classes
+ flux_CO2$cover_type <- as.factor(flux_CO2$cover_type)
+ flux_CO2$cover_type <- recode(flux_CO2$cover_type, "NA_Lake_NA"  = "lake") 
+ flux_CO2$cover_type <- recode(flux_CO2$cover_type, "NA_lake_NA"  = "lake")
+ flux_CO2$cover_type <- recode(flux_CO2$cover_type, "NA_stream_bogs"  = "bogs")
+ flux_CO2$cover_type <- recode(flux_CO2$cover_type, "NA_NA_bogs"  = "bogs")
+ flux_CO2$cover_type <- recode(flux_CO2$cover_type, "NA_NA_wetland_general"  = "general wetland")
+ flux_CO2$cover_type <- recode(flux_CO2$cover_type, "tundra_NA_NA"  = "tundra")
+ 
+#export as csv
+ write.csv(flux_CH4, file = "flux_CH4.csv")
+ write.csv(flux_CO2, file = "flux_CO2.csv")
+```
+
+
+interstitial data cleaning and filtering
+```{r}
+## Cleaning interstitial data
+#replacing NAs for permafrost and thermokarst with absent/no
+inter_data$pro_permafrost <- na.replace(inter_data$pro_permafrost, "absent")
+inter_data$pro_thermokarst <- na.replace(inter_data$pro_thermokarst, "no")
+inter_data$pro_permafrost <- recode(inter_data$pro_permafrost, "yes" = "present") 
+
+#filtering CH4 ist data
+inter_CH4 <- inter_data %>%
+  select(entry_name, site_lat, site_long, site_datum, ist_analyte, ist_13c, ist_2h, pro_thaw_depth, pro_depth_water, pro_land_cover, pro_water_body, pro_permafrost, pro_thermokarst, pro_wetland_type, pro_lake_depth, pro_lake_SA, pro_lake_sediment) %>% #filters down to only the named columns
+  filter(ist_analyte == "CH4") %>%  #filters for CH4 data.
+  replace_with_na(replace = list(pro_land_cover = "wetland")) %>% #replaces wetland landcover type w NA for simplicity (not totally necessary)
+  unite("cover_type", c(pro_land_cover, pro_water_body, pro_wetland_type), remove = FALSE) #creates 1 new column called "cover_type" w land_cover, water_body, and wetland_type
+
+##recoding cover type classes
+ inter_CH4$cover_type <- as.factor(inter_CH4$cover_type)
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "tundra_pond_NA"  = "pond") 
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "NA_NA_bog"  = "bogs")
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "NA_NA_bogs"  = "bogs")
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "NA_NA_fens"  = "fens")
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "NA_NA_permafrost bogs"  = "permafrost bogs")
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "NA_NA_permafrost wetlands"  = "permafrost wetlands")
+ inter_CH4$cover_type <- recode(inter_CH4$cover_type, "tundra_NA_NA"  = "tundra")
+ 
+
+#filtering CO2 ist data
+inter_CO2 <- inter_data %>%
+  select(entry_name, site_lat, site_long, site_datum, ist_analyte, ist_13c, pro_thaw_depth, pro_depth_water, pro_land_cover, pro_water_body, pro_permafrost, pro_thermokarst, pro_wetland_type, pro_lake_depth, pro_lake_SA, pro_lake_sediment) %>% #filters down to only the named columns
+  filter(ist_analyte == "CO2") %>%  #filters for CH4 data.
+  replace_with_na(replace = list(pro_land_cover = "wetland")) %>% #replaces wetland landcover type w NA for simplicity (not totally necessary)
+  unite("cover_type", c(pro_land_cover, pro_water_body, pro_wetland_type), remove = FALSE) #creates 1 new column w land_cover, water_body, and wetland_type
+
+#recoding cover type classes
+ inter_CO2$cover_type <- as.factor(inter_CO2$cover_type)
+ inter_CO2$cover_type <- recode(inter_CO2$cover_type, "tundra_pond_NA"  = "pond")
+  inter_CO2$cover_type <- recode(inter_CO2$cover_type, "NA_NA_bog"  = "bogs")
+ inter_CO2$cover_type <- recode(inter_CO2$cover_type, "NA_NA_bogs"  = "bogs")
+ inter_CO2$cover_type <- recode(inter_CO2$cover_type, "NA_NA_fens"  = "fens")
+ inter_CO2$cover_type <- recode(inter_CO2$cover_type, "NA_NA_permafrost bogs"  = "permafrost bogs")
+ inter_CO2$cover_type <- recode(inter_CO2$cover_type, "NA_NA_permafrost wetlands"  = "permafrost wetlands")
+ inter_CO2$cover_type <- recode(inter_CO2$cover_type, "tundra_NA_NA"  = "tundra")
+ 
+ #export as csv
+ write.csv(inter_CH4, file = "inter_CH4.csv")
+ write.csv(inter_CO2, file = "inter_CO2.csv")
+```
+
+
+
+
+
+
